@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workplace Health Check — Diagnostic Assessment</title>
     <meta name="description" content="A professional diagnostic assessment tool that helps organizational leaders evaluate workplace health across five critical dimensions.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230a0e1a'/><path d='M16 4l-1.5 8.5L7 16l7.5 3.5L16 28l1.5-8.5L25 16l-7.5-3.5z' fill='%23d4a853' opacity='0.9'/></svg>">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,6 +96,7 @@
         .check-item.checked {
             background: rgba(212, 168, 83, 0.06);
             border-color: rgba(212, 168, 83, 0.4);
+            border-left: 3px solid #d4a853;
         }
 
         .check-box {
@@ -253,6 +255,84 @@
         .step-container {
             will-change: transform, opacity;
         }
+
+        /* Hero radial glow */
+        .hero-glow {
+            position: absolute;
+            top: 50%;
+            right: 10%;
+            width: 500px;
+            height: 500px;
+            transform: translate(0, -50%);
+            background: radial-gradient(circle, rgba(212, 168, 83, 0.06) 0%, rgba(212, 168, 83, 0.02) 40%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Radar/pentagon diagnostic graphic */
+        .radar-graphic {
+            position: relative;
+            width: 320px;
+            height: 320px;
+        }
+        .radar-ring {
+            position: absolute;
+            inset: 0;
+            border: 1px solid rgba(212, 168, 83, 0.08);
+            border-radius: 50%;
+        }
+        .radar-ring:nth-child(2) {
+            inset: 20%;
+            border-color: rgba(212, 168, 83, 0.12);
+        }
+        .radar-ring:nth-child(3) {
+            inset: 40%;
+            border-color: rgba(212, 168, 83, 0.16);
+        }
+        .radar-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 1px;
+            background: rgba(212, 168, 83, 0.08);
+            transform-origin: left center;
+        }
+        .radar-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #d4a853;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(212, 168, 83, 0.4);
+            transform: translate(-50%, -50%);
+        }
+        .radar-label {
+            position: absolute;
+            font-size: 0.6875rem;
+            font-weight: 500;
+            color: rgba(196, 185, 166, 0.5);
+            white-space: nowrap;
+            letter-spacing: 0.03em;
+        }
+
+        /* Score counter animation */
+        .score-counter {
+            display: inline-block;
+            min-width: 1.2em;
+            text-align: right;
+        }
+
+        /* CTA card emphasis */
+        .cta-primary {
+            background: rgba(212, 168, 83, 0.06);
+            border-color: rgba(212, 168, 83, 0.3);
+        }
+        .cta-primary:hover {
+            background: rgba(212, 168, 83, 0.1);
+            border-color: rgba(212, 168, 83, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212, 168, 83, 0.12);
+        }
     </style>
 </head>
 <body x-data="diagnosticTool()" x-cloak>
@@ -303,50 +383,100 @@
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
-                 class="step-container min-h-screen flex items-center pt-16">
-            <div class="max-w-5xl mx-auto px-6 py-20 w-full">
-                <div class="max-w-3xl">
-                    <!-- Eyebrow -->
-                    <div class="flex items-center gap-3 mb-8" id="landing-eyebrow">
-                        <div class="h-px w-12 bg-amber-400/40"></div>
-                        <span class="text-sm font-medium tracking-widest uppercase text-amber-400/80">Diagnostic Assessment</span>
+                 class="step-container min-h-screen flex items-center pt-16 relative overflow-hidden">
+
+            <!-- Background glow -->
+            <div class="hero-glow hidden lg:block" id="landing-glow"></div>
+
+            <div class="max-w-6xl mx-auto px-6 py-20 w-full">
+                <div class="grid lg:grid-cols-5 gap-16 items-center">
+                    <!-- Left: Content -->
+                    <div class="lg:col-span-3">
+                        <!-- Eyebrow -->
+                        <div class="flex items-center gap-3 mb-8" id="landing-eyebrow">
+                            <div class="h-px w-12 bg-amber-400/40"></div>
+                            <span class="text-sm font-medium tracking-widest uppercase text-amber-400/80">Diagnostic Assessment</span>
+                        </div>
+
+                        <!-- Heading -->
+                        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl text-warm-50 leading-tight mb-6" id="landing-heading">
+                            How Healthy Is<br>Your Workplace?
+                        </h1>
+
+                        <!-- Subhead -->
+                        <p class="text-lg sm:text-xl text-warm-300 leading-relaxed max-w-2xl mb-4" id="landing-subhead">
+                            A structured diagnostic across five critical dimensions of organisational health. Designed for leaders who want evidence, not opinions.
+                        </p>
+
+                        <p class="text-warm-400 mb-10" id="landing-detail">
+                            25 indicators &middot; 5 dimensions &middot; 3 minutes &middot; Personalised results
+                        </p>
+
+                        <!-- CTA -->
+                        <div id="landing-cta">
+                            <button @click="goToStep(1)" class="btn-primary text-base">
+                                Begin Assessment
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Trust signals -->
+                        <div class="mt-16 flex flex-col sm:flex-row gap-6 text-sm text-warm-500" id="landing-trust">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                                <span>No data stored without consent</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Takes approximately 3 minutes</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                                <span>GDPR compliant</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Heading -->
-                    <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl text-warm-50 leading-tight mb-6" id="landing-heading">
-                        How Healthy Is<br>Your Workplace?
-                    </h1>
-
-                    <!-- Subhead -->
-                    <p class="text-lg sm:text-xl text-warm-300 leading-relaxed max-w-2xl mb-4" id="landing-subhead">
-                        A structured diagnostic across five critical dimensions of organisational health. Designed for leaders who want evidence, not opinions.
-                    </p>
-
-                    <p class="text-warm-400 mb-10" id="landing-detail">
-                        25 indicators &middot; 5 dimensions &middot; 3 minutes &middot; Personalised results
-                    </p>
-
-                    <!-- CTA -->
-                    <div id="landing-cta">
-                        <button @click="goToStep(1)" class="btn-primary text-base">
-                            Begin Assessment
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                        </button>
-                    </div>
-
-                    <!-- Trust signals -->
-                    <div class="mt-16 flex flex-col sm:flex-row gap-6 text-sm text-warm-500" id="landing-trust">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-                            <span>No data stored without consent</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Takes approximately 3 minutes</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-                            <span>GDPR compliant</span>
+                    <!-- Right: Radar Graphic -->
+                    <div class="lg:col-span-2 hidden lg:flex items-center justify-center" id="landing-graphic">
+                        <div class="radar-graphic">
+                            <!-- Concentric rings -->
+                            <div class="radar-ring"></div>
+                            <div class="radar-ring"></div>
+                            <div class="radar-ring"></div>
+                            <!-- Axis lines (5 spokes for 5 dimensions) -->
+                            <div class="radar-line" style="transform: rotate(-90deg)"></div>
+                            <div class="radar-line" style="transform: rotate(-18deg)"></div>
+                            <div class="radar-line" style="transform: rotate(54deg)"></div>
+                            <div class="radar-line" style="transform: rotate(126deg)"></div>
+                            <div class="radar-line" style="transform: rotate(198deg)"></div>
+                            <!-- Pentagon shape (SVG overlay) -->
+                            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+                                <!-- Filled pentagon area -->
+                                <polygon points="160,45 275,128 232,268 88,268 45,128"
+                                         fill="rgba(212, 168, 83, 0.04)"
+                                         stroke="rgba(212, 168, 83, 0.25)"
+                                         stroke-width="1.5"/>
+                                <!-- Inner "score" pentagon (offset to show asymmetry) -->
+                                <polygon points="160,80 240,140 215,235 105,235 70,155"
+                                         fill="rgba(212, 168, 83, 0.08)"
+                                         stroke="#d4a853"
+                                         stroke-width="1"
+                                         stroke-dasharray="4 3"
+                                         opacity="0.6"/>
+                            </svg>
+                            <!-- Data points -->
+                            <div class="radar-dot" style="top: 25%; left: 50%"></div>
+                            <div class="radar-dot" style="top: 40%; left: 82%"></div>
+                            <div class="radar-dot" style="top: 74%; left: 72%"></div>
+                            <div class="radar-dot" style="top: 74%; left: 28%"></div>
+                            <div class="radar-dot" style="top: 48%; left: 18%"></div>
+                            <!-- Dimension labels -->
+                            <span class="radar-label" style="top: 8%; left: 50%; transform: translateX(-50%)">Leadership</span>
+                            <span class="radar-label" style="top: 35%; right: -8%">Communication</span>
+                            <span class="radar-label" style="bottom: 8%; right: 5%">Collaboration</span>
+                            <span class="radar-label" style="bottom: 8%; left: 5%">Growth</span>
+                            <span class="radar-label" style="top: 35%; left: -6%">Wellbeing</span>
                         </div>
                     </div>
                 </div>
@@ -407,7 +537,7 @@
                     <div class="flex items-center justify-between">
                         <button @click="goToStep(currentStep - 1)"
                                 class="btn-secondary"
-                                :class="{ 'invisible': currentStep === 1 }">
+                                :class="{ 'opacity-0 pointer-events-none': currentStep === 1 }">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12"/></svg>
                             Back
                         </button>
@@ -447,10 +577,26 @@
 
                 <!-- Score + Tier -->
                 <div class="text-center mb-16" id="results-score">
-                    <!-- Score number -->
-                    <div class="mb-6">
-                        <span class="font-display text-7xl sm:text-8xl tabular-nums" :style="`color: ${tierData.color}`" x-text="totalScore"></span>
-                        <span class="text-2xl text-warm-500 ml-1">/25</span>
+                    <!-- Score circle -->
+                    <div class="relative inline-flex items-center justify-center mb-8">
+                        <!-- Ring background -->
+                        <svg class="w-48 h-48 sm:w-56 sm:h-56" viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(240, 236, 228, 0.06)" stroke-width="4"/>
+                            <circle cx="100" cy="100" r="88" fill="none"
+                                    :stroke="tierData.color"
+                                    stroke-width="4"
+                                    stroke-linecap="round"
+                                    :stroke-dasharray="`${(totalScore / 25) * 553} 553`"
+                                    stroke-dashoffset="0"
+                                    transform="rotate(-90 100 100)"
+                                    style="transition: stroke-dasharray 1.2s cubic-bezier(0.4, 0, 0.2, 1);"
+                                    opacity="0.7"/>
+                        </svg>
+                        <!-- Score number overlay -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="font-display text-6xl sm:text-7xl tabular-nums score-counter" :style="`color: ${tierData.color}`" x-ref="scoreNum" x-text="displayScore"></span>
+                            <span class="text-lg text-warm-500 -mt-1">of 25</span>
+                        </div>
                     </div>
 
                     <!-- Tier badge -->
@@ -504,34 +650,45 @@
                 <div class="divider mb-16"></div>
 
                 <!-- CTAs -->
-                <div class="grid sm:grid-cols-3 gap-4 mb-16" id="results-ctas">
-                    <!-- Download Report -->
+                <div class="space-y-4 mb-16" id="results-ctas">
+                    <!-- Download Report — Hero CTA -->
                     <button @click="showModal = true"
-                            class="flex flex-col items-center text-center p-8 rounded-xl border border-amber-400/20 bg-amber-400/[0.03] hover:bg-amber-400/[0.06] hover:border-amber-400/30 transition-all duration-300 cursor-pointer group">
-                        <div class="w-12 h-12 rounded-xl bg-amber-400/10 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                            class="w-full flex items-center gap-6 p-6 sm:p-8 rounded-xl border border-amber-400/30 bg-amber-400/[0.04] hover:bg-amber-400/[0.08] hover:border-amber-400/50 transition-all duration-300 cursor-pointer group text-left"
+                            style="transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                        <div class="w-14 h-14 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                         </div>
-                        <h4 class="font-semibold text-warm-100 mb-1">Download Report</h4>
-                        <p class="text-sm text-warm-400">Get your full diagnostic report as PDF</p>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-lg text-warm-50 mb-1">Download Your Full Report</h4>
+                            <p class="text-sm text-warm-400">Get a personalised PDF with detailed analysis, dimension scores, and tailored action steps.</p>
+                        </div>
+                        <svg class="w-5 h-5 text-amber-400/60 group-hover:text-amber-400 group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                     </button>
 
-                    <!-- Book Consultation -->
-                    <a href="#" class="flex flex-col items-center text-center p-8 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                            <svg class="w-6 h-6 text-warm-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
-                        </div>
-                        <h4 class="font-semibold text-warm-100 mb-1">Book a Consultation</h4>
-                        <p class="text-sm text-warm-400">Discuss your results with an expert</p>
-                    </a>
+                    <!-- Secondary CTAs -->
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <!-- Book Consultation -->
+                        <a href="#" class="flex items-center gap-4 p-5 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-300 group">
+                            <div class="w-11 h-11 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                                <svg class="w-5 h-5 text-warm-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-warm-100 mb-0.5">Book a Consultation</h4>
+                                <p class="text-sm text-warm-400">Discuss your results with an expert</p>
+                            </div>
+                        </a>
 
-                    <!-- Case Studies -->
-                    <a href="#" class="flex flex-col items-center text-center p-8 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                            <svg class="w-6 h-6 text-warm-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-                        </div>
-                        <h4 class="font-semibold text-warm-100 mb-1">View Case Studies</h4>
-                        <p class="text-sm text-warm-400">See how others improved their scores</p>
-                    </a>
+                        <!-- Case Studies -->
+                        <a href="#" class="flex items-center gap-4 p-5 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-300 group">
+                            <div class="w-11 h-11 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                                <svg class="w-5 h-5 text-warm-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-warm-100 mb-0.5">View Case Studies</h4>
+                                <p class="text-sm text-warm-400">See how others improved their scores</p>
+                            </div>
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Retake -->
@@ -632,6 +789,7 @@
                 email: '',
                 gdprConsent: false,
                 emailSent: false,
+                displayScore: 0,
 
                 sections: [
                     {
@@ -783,6 +941,7 @@
 
                 showResults() {
                     window.scrollTo({ top: 0, behavior: 'instant' });
+                    this.displayScore = 0;
                     this.currentStep = 6;
                     this.$nextTick(() => {
                         this.animateResults();
@@ -790,12 +949,24 @@
                 },
 
                 animateResults() {
+                    const self = this;
+                    const target = this.totalScore;
+
                     const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
                     tl.fromTo('#results-header', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6 })
                       .fromTo('#results-score', { y: 30, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7 }, '-=0.3')
                       .fromTo('#results-breakdown > *', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.08, duration: 0.5 }, '-=0.3')
                       .fromTo('#results-recommendations > *', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.08, duration: 0.5 }, '-=0.2')
                       .fromTo('#results-ctas > *', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, stagger: 0.1, duration: 0.5 }, '-=0.2');
+
+                    // Counter animation
+                    gsap.to(self, {
+                        displayScore: target,
+                        duration: 1.5,
+                        delay: 0.5,
+                        ease: 'power2.out',
+                        snap: { displayScore: 1 }
+                    });
                 },
 
                 submitEmail() {
@@ -809,6 +980,7 @@
                     this.gdprConsent = false;
                     this.emailSent = false;
                     this.showModal = false;
+                    this.displayScore = 0;
                     this.goToStep(0);
                 },
 
@@ -821,6 +993,14 @@
                         gsap.fromTo('#landing-detail', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, delay: 0.6 });
                         gsap.fromTo('#landing-cta', { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, delay: 0.7 });
                         gsap.fromTo('#landing-trust', { y: 15, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.5, delay: 0.9 });
+
+                        // Radar graphic animation
+                        const graphic = document.getElementById('landing-graphic');
+                        if (graphic) {
+                            gsap.fromTo(graphic, { autoAlpha: 0, scale: 0.9, rotate: -10 }, { autoAlpha: 1, scale: 1, rotate: 0, duration: 1.2, delay: 0.5, ease: 'power2.out' });
+                            gsap.fromTo('.radar-dot', { scale: 0, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.4, stagger: 0.12, delay: 1.0, ease: 'back.out(2)' });
+                            gsap.fromTo('.radar-label', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, stagger: 0.08, delay: 1.4 });
+                        }
                     });
                 }
             };
