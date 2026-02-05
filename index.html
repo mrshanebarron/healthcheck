@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workplace Health Check — Diagnostic Assessment</title>
+    <meta name="description" content="A professional diagnostic assessment tool that helps organizational leaders evaluate workplace health across five critical dimensions.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#0a0e1a',
+                            900: '#0f1629',
+                            800: '#161d35',
+                            700: '#1e2844',
+                            600: '#2a3557',
+                        },
+                        slate: {
+                            750: '#293548',
+                        },
+                        amber: {
+                            400: '#d4a853',
+                            500: '#c9a043',
+                            600: '#b8922e',
+                        },
+                        warm: {
+                            50: '#faf8f5',
+                            100: '#f0ece4',
+                            200: '#ddd6c8',
+                            300: '#c4b9a6',
+                            400: '#a39882',
+                            500: '#8a7f6a',
+                        },
+                    },
+                    fontFamily: {
+                        display: ['DM Serif Display', 'Georgia', 'serif'],
+                        body: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0a0e1a;
+            color: #f0ece4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        [x-cloak] { display: none !important; }
+
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px;
+        }
+
+        /* Custom checkbox */
+        .check-item {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .check-item:hover {
+            background: rgba(212, 168, 83, 0.04);
+            border-color: rgba(212, 168, 83, 0.3);
+        }
+        .check-item.checked {
+            background: rgba(212, 168, 83, 0.06);
+            border-color: rgba(212, 168, 83, 0.4);
+        }
+
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(240, 236, 228, 0.25);
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .check-box.active {
+            background: #d4a853;
+            border-color: #d4a853;
+            transform: scale(1.05);
+        }
+        .check-box svg {
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .check-box.active svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Progress segments */
+        .progress-segment {
+            height: 3px;
+            background: rgba(240, 236, 228, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        .progress-segment .fill {
+            height: 100%;
+            width: 0%;
+            background: #d4a853;
+            border-radius: 2px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-segment.complete .fill { width: 100%; }
+        .progress-segment.active .fill { width: 50%; }
+        .progress-segment.active {
+            background: rgba(212, 168, 83, 0.15);
+        }
+
+        /* Tier colors */
+        .tier-critical { --tier-color: #ef4444; --tier-bg: rgba(239, 68, 68, 0.08); }
+        .tier-at-risk { --tier-color: #f59e0b; --tier-bg: rgba(245, 158, 11, 0.08); }
+        .tier-developing { --tier-color: #3b82f6; --tier-bg: rgba(59, 130, 246, 0.08); }
+        .tier-thriving { --tier-color: #10b981; --tier-bg: rgba(16, 185, 129, 0.08); }
+
+        .tier-badge {
+            border: 1px solid var(--tier-color);
+            background: var(--tier-bg);
+            color: var(--tier-color);
+        }
+
+        /* Section breakdown bar */
+        .breakdown-bar {
+            height: 6px;
+            background: rgba(240, 236, 228, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .breakdown-bar .fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Button base */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 2rem;
+            background: #d4a853;
+            color: #0a0e1a;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #e0b865;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(212, 168, 83, 0.25);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 2rem;
+            background: transparent;
+            color: #f0ece4;
+            font-weight: 500;
+            font-size: 0.9375rem;
+            border-radius: 6px;
+            border: 1px solid rgba(240, 236, 228, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            border-color: rgba(240, 236, 228, 0.4);
+            background: rgba(240, 236, 228, 0.04);
+        }
+
+        .btn-outline-gold {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 2rem;
+            background: transparent;
+            color: #d4a853;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 168, 83, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .btn-outline-gold:hover {
+            background: rgba(212, 168, 83, 0.08);
+            border-color: #d4a853;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(212, 168, 83, 0.2), transparent);
+        }
+
+        /* Focus styles for accessibility */
+        :focus-visible {
+            outline: 2px solid #d4a853;
+            outline-offset: 2px;
+        }
+
+        /* Step container for GSAP */
+        .step-container {
+            will-change: transform, opacity;
+        }
+    </style>
+</head>
+<body x-data="diagnosticTool()" x-cloak>
+    <div class="relative z-10 min-h-screen">
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- HEADER -->
+        <!-- ═══════════════════════════════════════════ -->
+        <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5" style="background: rgba(10, 14, 26, 0.9); backdrop-filter: blur(12px);">
+            <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-md bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <span class="font-display text-lg text-warm-100">Workplace Health Check</span>
+                </div>
+
+                <!-- Progress bar (visible during assessment) -->
+                <div x-show="currentStep >= 1 && currentStep <= 5" x-transition class="hidden sm:flex items-center gap-1.5">
+                    <template x-for="i in 5" :key="i">
+                        <div class="flex items-center gap-1.5">
+                            <div class="progress-segment w-10"
+                                 :class="{
+                                     'complete': i < currentStep,
+                                     'active': i === currentStep
+                                 }">
+                                <div class="fill"></div>
+                            </div>
+                        </div>
+                    </template>
+                    <span class="ml-2 text-xs text-warm-400 tabular-nums" x-text="`${currentStep}/5`"></span>
+                </div>
+
+                <!-- Score indicator (visible during assessment) -->
+                <div x-show="currentStep >= 1 && currentStep <= 5" class="flex sm:hidden items-center gap-2">
+                    <span class="text-xs text-warm-400">Section</span>
+                    <span class="text-sm font-semibold text-amber-400 tabular-nums" x-text="`${currentStep}/5`"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- LANDING (step 0) -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section x-show="currentStep === 0"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 class="step-container min-h-screen flex items-center pt-16">
+            <div class="max-w-5xl mx-auto px-6 py-20 w-full">
+                <div class="max-w-3xl">
+                    <!-- Eyebrow -->
+                    <div class="flex items-center gap-3 mb-8" id="landing-eyebrow">
+                        <div class="h-px w-12 bg-amber-400/40"></div>
+                        <span class="text-sm font-medium tracking-widest uppercase text-amber-400/80">Diagnostic Assessment</span>
+                    </div>
+
+                    <!-- Heading -->
+                    <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl text-warm-50 leading-tight mb-6" id="landing-heading">
+                        How Healthy Is<br>Your Workplace?
+                    </h1>
+
+                    <!-- Subhead -->
+                    <p class="text-lg sm:text-xl text-warm-300 leading-relaxed max-w-2xl mb-4" id="landing-subhead">
+                        A structured diagnostic across five critical dimensions of organisational health. Designed for leaders who want evidence, not opinions.
+                    </p>
+
+                    <p class="text-warm-400 mb-10" id="landing-detail">
+                        25 indicators &middot; 5 dimensions &middot; 3 minutes &middot; Personalised results
+                    </p>
+
+                    <!-- CTA -->
+                    <div id="landing-cta">
+                        <button @click="goToStep(1)" class="btn-primary text-base">
+                            Begin Assessment
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Trust signals -->
+                    <div class="mt-16 flex flex-col sm:flex-row gap-6 text-sm text-warm-500" id="landing-trust">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                            <span>No data stored without consent</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Takes approximately 3 minutes</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                            <span>GDPR compliant</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- ASSESSMENT STEPS (1-5) -->
+        <!-- ═══════════════════════════════════════════ -->
+        <template x-for="(section, sIdx) in sections" :key="sIdx">
+            <section x-show="currentStep === sIdx + 1"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-x-8"
+                     x-transition:enter-end="opacity-100 translate-x-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-x-0"
+                     x-transition:leave-end="opacity-0 -translate-x-8"
+                     class="step-container min-h-screen pt-16">
+                <div class="max-w-3xl mx-auto px-6 py-16">
+
+                    <!-- Section header -->
+                    <div class="mb-12">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-amber-400/30 text-amber-400 text-sm font-semibold" x-text="sIdx + 1"></span>
+                            <div class="h-px flex-1 bg-gradient-to-r from-amber-400/20 to-transparent"></div>
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl text-warm-50 mb-4" x-text="section.title"></h2>
+                        <p class="text-warm-300 text-lg leading-relaxed max-w-2xl" x-text="section.description"></p>
+                    </div>
+
+                    <!-- Checkboxes -->
+                    <div class="space-y-3 mb-12">
+                        <template x-for="(item, qIdx) in section.questions" :key="qIdx">
+                            <div @click="toggleCheck(sIdx, qIdx)"
+                                 @keydown.enter="toggleCheck(sIdx, qIdx)"
+                                 @keydown.space.prevent="toggleCheck(sIdx, qIdx)"
+                                 role="checkbox"
+                                 :aria-checked="checks[sIdx * 5 + qIdx]"
+                                 tabindex="0"
+                                 class="check-item flex items-start gap-4 p-5 rounded-lg border border-white/[0.06] cursor-pointer select-none"
+                                 :class="{ 'checked': checks[sIdx * 5 + qIdx] }">
+                                <div class="check-box mt-0.5" :class="{ 'active': checks[sIdx * 5 + qIdx] }">
+                                    <svg class="w-3.5 h-3.5 text-navy-950" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                                <span class="text-warm-200 leading-relaxed" x-text="item"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Section score hint -->
+                    <div class="mb-8 text-sm text-warm-500">
+                        <span x-text="sectionScore(sIdx)"></span> of 5 selected in this section
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="flex items-center justify-between">
+                        <button @click="goToStep(currentStep - 1)"
+                                class="btn-secondary"
+                                :class="{ 'invisible': currentStep === 1 }">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12"/></svg>
+                            Back
+                        </button>
+
+                        <button @click="currentStep < 5 ? goToStep(currentStep + 1) : showResults()"
+                                class="btn-primary">
+                            <span x-text="currentStep < 5 ? 'Continue' : 'View Results'"></span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- RESULTS (step 6) -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section x-show="currentStep === 6"
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 class="step-container min-h-screen pt-16">
+            <div class="max-w-4xl mx-auto px-6 py-16">
+
+                <!-- Results header -->
+                <div class="text-center mb-16" id="results-header">
+                    <div class="flex items-center justify-center gap-3 mb-6">
+                        <div class="h-px w-12 bg-amber-400/40"></div>
+                        <span class="text-sm font-medium tracking-widest uppercase text-amber-400/80">Your Results</span>
+                        <div class="h-px w-12 bg-amber-400/40"></div>
+                    </div>
+
+                    <h2 class="font-display text-4xl sm:text-5xl text-warm-50 mb-4">
+                        Workplace Health Score
+                    </h2>
+                </div>
+
+                <!-- Score + Tier -->
+                <div class="text-center mb-16" id="results-score">
+                    <!-- Score number -->
+                    <div class="mb-6">
+                        <span class="font-display text-7xl sm:text-8xl tabular-nums" :style="`color: ${tierData.color}`" x-text="totalScore"></span>
+                        <span class="text-2xl text-warm-500 ml-1">/25</span>
+                    </div>
+
+                    <!-- Tier badge -->
+                    <div class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold"
+                         :class="tierData.badgeClass">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" :d="tierData.icon"/>
+                        </svg>
+                        <span x-text="tierData.label"></span>
+                    </div>
+
+                    <!-- Tier description -->
+                    <p class="mt-6 text-lg text-warm-300 max-w-xl mx-auto leading-relaxed" x-text="tierData.description"></p>
+                </div>
+
+                <div class="divider mb-16"></div>
+
+                <!-- Section breakdown -->
+                <div class="mb-16" id="results-breakdown">
+                    <h3 class="font-display text-2xl text-warm-100 mb-8">Dimension Breakdown</h3>
+                    <div class="space-y-6">
+                        <template x-for="(section, sIdx) in sections" :key="sIdx">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-warm-200 font-medium" x-text="section.title"></span>
+                                    <span class="text-sm tabular-nums" :style="`color: ${sectionColor(sIdx)}`" x-text="`${sectionScore(sIdx)}/5`"></span>
+                                </div>
+                                <div class="breakdown-bar">
+                                    <div class="fill" :style="`width: ${sectionScore(sIdx) * 20}%; background: ${sectionColor(sIdx)}`"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="mb-16" id="results-recommendations">
+                    <h3 class="font-display text-2xl text-warm-100 mb-8">Recommendations</h3>
+                    <div class="space-y-4">
+                        <template x-for="rec in recommendations" :key="rec">
+                            <div class="flex items-start gap-4 p-5 rounded-lg border border-white/[0.06] bg-navy-800/40">
+                                <div class="w-6 h-6 rounded-full bg-amber-400/10 border border-amber-400/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                                </div>
+                                <span class="text-warm-200 leading-relaxed" x-text="rec"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="divider mb-16"></div>
+
+                <!-- CTAs -->
+                <div class="grid sm:grid-cols-3 gap-4 mb-16" id="results-ctas">
+                    <!-- Download Report -->
+                    <button @click="showModal = true"
+                            class="flex flex-col items-center text-center p-8 rounded-xl border border-amber-400/20 bg-amber-400/[0.03] hover:bg-amber-400/[0.06] hover:border-amber-400/30 transition-all duration-300 cursor-pointer group">
+                        <div class="w-12 h-12 rounded-xl bg-amber-400/10 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                        </div>
+                        <h4 class="font-semibold text-warm-100 mb-1">Download Report</h4>
+                        <p class="text-sm text-warm-400">Get your full diagnostic report as PDF</p>
+                    </button>
+
+                    <!-- Book Consultation -->
+                    <a href="#" class="flex flex-col items-center text-center p-8 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-300 group">
+                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                            <svg class="w-6 h-6 text-warm-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                        </div>
+                        <h4 class="font-semibold text-warm-100 mb-1">Book a Consultation</h4>
+                        <p class="text-sm text-warm-400">Discuss your results with an expert</p>
+                    </a>
+
+                    <!-- Case Studies -->
+                    <a href="#" class="flex flex-col items-center text-center p-8 rounded-xl border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-300 group">
+                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                            <svg class="w-6 h-6 text-warm-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+                        </div>
+                        <h4 class="font-semibold text-warm-100 mb-1">View Case Studies</h4>
+                        <p class="text-sm text-warm-400">See how others improved their scores</p>
+                    </a>
+                </div>
+
+                <!-- Retake -->
+                <div class="text-center">
+                    <button @click="reset()" class="btn-secondary text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
+                        Retake Assessment
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- EMAIL CAPTURE MODAL -->
+        <!-- ═══════════════════════════════════════════ -->
+        <div x-show="showModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click.self="showModal = false"
+             @keydown.escape.window="showModal = false"
+             class="fixed inset-0 z-50 flex items-center justify-center p-6 modal-overlay">
+
+            <div x-show="showModal"
+                 x-transition:enter="transition ease-out duration-300 delay-100"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 class="w-full max-w-md bg-navy-800 border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
+
+                <div x-show="!emailSent">
+                    <h3 class="font-display text-2xl text-warm-50 mb-2">Download Your Report</h3>
+                    <p class="text-warm-400 mb-8">Enter your email and we'll send your personalised workplace health report.</p>
+
+                    <form @submit.prevent="submitEmail()">
+                        <div class="mb-4">
+                            <label for="email" class="block text-sm font-medium text-warm-300 mb-2">Work Email</label>
+                            <input type="email"
+                                   id="email"
+                                   x-model="email"
+                                   required
+                                   placeholder="you@company.com"
+                                   class="w-full bg-navy-900 border border-white/10 rounded-lg px-4 py-3 text-warm-100 placeholder-warm-500 focus:outline-none focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/20 transition-colors">
+                        </div>
+                        <div class="mb-6">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" x-model="gdprConsent" class="mt-1 accent-amber-500">
+                                <span class="text-xs text-warm-400 leading-relaxed">I consent to receiving my diagnostic report and related communications. You can unsubscribe at any time. <a href="#" class="text-amber-400/70 hover:text-amber-400 underline">Privacy Policy</a></span>
+                            </label>
+                        </div>
+                        <button type="submit"
+                                :disabled="!email || !gdprConsent"
+                                class="btn-primary w-full justify-center"
+                                :class="{ 'opacity-40 cursor-not-allowed': !email || !gdprConsent }">
+                            Send My Report
+                        </button>
+                    </form>
+                </div>
+
+                <div x-show="emailSent" class="text-center py-4">
+                    <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h3 class="font-display text-2xl text-warm-50 mb-2">Report Sent</h3>
+                    <p class="text-warm-400 mb-6">Check your inbox for your personalised workplace health report.</p>
+                    <button @click="showModal = false" class="btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- FOOTER -->
+        <!-- ═══════════════════════════════════════════ -->
+        <footer x-show="currentStep === 0 || currentStep === 6" class="border-t border-white/5 py-8">
+            <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-warm-500">
+                <span>&copy; 2026 Workplace Health Check. All rights reserved.</span>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-warm-300 transition-colors">Privacy Policy</a>
+                    <a href="#" class="hover:text-warm-300 transition-colors">Terms of Use</a>
+                    <a href="#" class="hover:text-warm-300 transition-colors">Contact</a>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ALPINE COMPONENT -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <script>
+        function diagnosticTool() {
+            return {
+                currentStep: 0,
+                checks: new Array(25).fill(false),
+                showModal: false,
+                email: '',
+                gdprConsent: false,
+                emailSent: false,
+
+                sections: [
+                    {
+                        title: 'Leadership & Direction',
+                        description: 'Strong leadership provides clarity, consistency, and accountability. This dimension examines whether your organisation\'s direction is clearly defined and effectively communicated.',
+                        questions: [
+                            'Our leadership team communicates a clear and compelling vision for the organisation',
+                            'Strategic decisions are made transparently, with rationale shared across the team',
+                            'Leaders are accountable for outcomes and model the behaviours they expect',
+                            'There is a consistent leadership approach that doesn\'t shift with every new initiative',
+                            'Middle managers are empowered and supported to lead effectively within their teams'
+                        ]
+                    },
+                    {
+                        title: 'Communication & Trust',
+                        description: 'Healthy organisations are built on open communication and mutual trust. This dimension assesses whether information flows freely and people feel safe speaking up.',
+                        questions: [
+                            'Information is shared openly rather than hoarded or filtered through hierarchy',
+                            'Feedback flows in all directions — upward, downward, and laterally',
+                            'People feel psychologically safe raising concerns without fear of retaliation',
+                            'There are regular, structured opportunities for honest dialogue between teams and leadership',
+                            'Commitments made are consistently followed through, building institutional trust'
+                        ]
+                    },
+                    {
+                        title: 'Team Dynamics & Collaboration',
+                        description: 'Effective collaboration requires more than proximity. This dimension evaluates whether teams work together productively and resolve tensions constructively.',
+                        questions: [
+                            'Cross-functional collaboration happens naturally, not just when mandated',
+                            'Conflict is addressed directly and constructively, not avoided or escalated',
+                            'Teams have shared goals that align with broader organisational objectives',
+                            'Roles and responsibilities are clearly defined, reducing duplication and gaps',
+                            'Diverse perspectives are actively sought and genuinely valued in decision-making'
+                        ]
+                    },
+                    {
+                        title: 'Growth & Development',
+                        description: 'Organisations that invest in their people retain them. This dimension measures whether your workplace actively supports professional growth and skill development.',
+                        questions: [
+                            'There is a genuine learning culture — mistakes are treated as opportunities, not failures',
+                            'Career development paths are clear and accessible to all, not just high-performers',
+                            'The organisation invests meaningfully in skills training and professional development',
+                            'Managers conduct regular, substantive development conversations beyond annual reviews',
+                            'Internal mobility and promotion from within are actively encouraged and visible'
+                        ]
+                    },
+                    {
+                        title: 'Wellbeing & Sustainability',
+                        description: 'Sustainable performance requires sustainable working practices. This dimension examines whether your workplace supports long-term health and resilience.',
+                        questions: [
+                            'Workloads are realistic and regularly reviewed to prevent chronic overwork',
+                            'Burnout warning signs are recognised and addressed proactively, not reactively',
+                            'Work-life boundaries are respected by leadership through both policy and practice',
+                            'Mental health support is available, accessible, and free from stigma',
+                            'The pace of change is managed — people have time to absorb and adapt before the next initiative'
+                        ]
+                    }
+                ],
+
+                get totalScore() {
+                    return this.checks.filter(Boolean).length;
+                },
+
+                get tierData() {
+                    const s = this.totalScore;
+                    if (s <= 5) return {
+                        label: 'Critical',
+                        color: '#ef4444',
+                        badgeClass: 'tier-badge tier-critical',
+                        icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
+                        description: 'Your workplace is showing significant signs of distress across multiple dimensions. Immediate, focused intervention is needed to address foundational issues before they compound further.'
+                    };
+                    if (s <= 10) return {
+                        label: 'At Risk',
+                        color: '#f59e0b',
+                        badgeClass: 'tier-badge tier-at-risk',
+                        icon: 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z',
+                        description: 'There are meaningful gaps in your organisational health that require attention. While some foundations are in place, several areas need structured improvement to prevent deterioration.'
+                    };
+                    if (s <= 15) return {
+                        label: 'Developing',
+                        color: '#3b82f6',
+                        badgeClass: 'tier-badge tier-developing',
+                        icon: 'M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941',
+                        description: 'Your workplace has a solid foundation with clear areas for growth. You\'re heading in the right direction — targeted improvements in your weaker dimensions will accelerate progress significantly.'
+                    };
+                    return {
+                        label: 'Thriving',
+                        color: '#10b981',
+                        badgeClass: 'tier-badge tier-thriving',
+                        icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                        description: 'Your organisation demonstrates strong health across most dimensions. Focus on maintaining these standards, sharing best practices, and continuing to invest in the areas that got you here.'
+                    };
+                },
+
+                get recommendations() {
+                    const recs = [];
+                    const scores = this.sections.map((_, i) => ({
+                        index: i,
+                        score: this.sectionScore(i),
+                        title: this.sections[i].title
+                    }));
+                    scores.sort((a, b) => a.score - b.score);
+
+                    // Always recommend based on weakest sections
+                    for (const s of scores) {
+                        if (s.score <= 1) {
+                            recs.push(`${s.title} requires urgent attention — with ${s.score} of 5 indicators met, this dimension needs immediate, structured intervention.`);
+                        } else if (s.score <= 2) {
+                            recs.push(`${s.title} is a significant gap — focus on building foundational practices in this area before pursuing advanced initiatives.`);
+                        } else if (s.score <= 3) {
+                            recs.push(`${s.title} shows promise but has room to grow — identify the specific gaps and create targeted action plans.`);
+                        } else if (s.score <= 4) {
+                            recs.push(`${s.title} is strong — review the remaining gap to move from good to exceptional in this dimension.`);
+                        } else {
+                            recs.push(`${s.title} is excellent — maintain current practices and consider sharing your approach as a model for other areas.`);
+                        }
+                    }
+                    return recs;
+                },
+
+                sectionScore(sIdx) {
+                    let count = 0;
+                    for (let i = 0; i < 5; i++) {
+                        if (this.checks[sIdx * 5 + i]) count++;
+                    }
+                    return count;
+                },
+
+                sectionColor(sIdx) {
+                    const score = this.sectionScore(sIdx);
+                    if (score <= 1) return '#ef4444';
+                    if (score <= 2) return '#f59e0b';
+                    if (score <= 3) return '#3b82f6';
+                    return '#10b981';
+                },
+
+                toggleCheck(sIdx, qIdx) {
+                    const idx = sIdx * 5 + qIdx;
+                    this.checks[idx] = !this.checks[idx];
+                    // Force reactivity
+                    this.checks = [...this.checks];
+                },
+
+                goToStep(step) {
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    this.currentStep = step;
+                },
+
+                showResults() {
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    this.currentStep = 6;
+                    this.$nextTick(() => {
+                        this.animateResults();
+                    });
+                },
+
+                animateResults() {
+                    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+                    tl.from('#results-header', { y: 20, autoAlpha: 0, duration: 0.6 })
+                      .from('#results-score', { y: 30, autoAlpha: 0, duration: 0.7 }, '-=0.3')
+                      .from('#results-breakdown > *', { y: 20, autoAlpha: 0, stagger: 0.08, duration: 0.5 }, '-=0.3')
+                      .from('#results-recommendations > *', { y: 20, autoAlpha: 0, stagger: 0.08, duration: 0.5 }, '-=0.2')
+                      .from('#results-ctas > *', { y: 20, autoAlpha: 0, stagger: 0.1, duration: 0.5 }, '-=0.2');
+                },
+
+                submitEmail() {
+                    // Demo: simulate sending
+                    this.emailSent = true;
+                },
+
+                reset() {
+                    this.checks = new Array(25).fill(false);
+                    this.email = '';
+                    this.gdprConsent = false;
+                    this.emailSent = false;
+                    this.showModal = false;
+                    this.goToStep(0);
+                },
+
+                init() {
+                    // Landing entrance animation
+                    this.$nextTick(() => {
+                        gsap.from('#landing-eyebrow', { y: 20, autoAlpha: 0, duration: 0.6, delay: 0.2 });
+                        gsap.from('#landing-heading', { y: 30, autoAlpha: 0, duration: 0.7, delay: 0.35 });
+                        gsap.from('#landing-subhead', { y: 25, autoAlpha: 0, duration: 0.6, delay: 0.5 });
+                        gsap.from('#landing-detail', { y: 20, autoAlpha: 0, duration: 0.5, delay: 0.6 });
+                        gsap.from('#landing-cta', { y: 20, autoAlpha: 0, duration: 0.5, delay: 0.7 });
+                        gsap.from('#landing-trust', { y: 15, autoAlpha: 0, duration: 0.5, delay: 0.9 });
+                    });
+                }
+            };
+        }
+    </script>
+</body>
+</html>
